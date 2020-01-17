@@ -4,13 +4,16 @@ on:
   push:
   pull_request:
   schedule:
-    - cron: '0 3 * * *'
+    - cron: "0 3 * * *"
 
 jobs:
   verify-links:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@master
+      - run: |
+          git fetch --no-tags --prune origin master 
+          git fetch --no-tags --prune origin $GITHUB_REF
       - name: Setup Node
         uses: actions/setup-node@v1
         with:
@@ -18,4 +21,14 @@ jobs:
       - name: Install markdown-link-check
         run: npm install -g markdown-link-check
       - name: Verify links
-        run: find . -name \*.md ! -iname _sidebar.md ! -ipath \*/ISSUE_TEMPLATE/\*.md -print0 | xargs -0 -n1 markdown-link-check -q -c .github/markdown-link-check-config.json
+        run: |
+          deleted_or_renamed=$(git diff --no-commit-id --name-only --diff-filter DR origin/$GITHUB_REF | grep  -i .md$ | grep -v -i _sidebar.md | wc -l)
+
+          if [ $deleted_or_renamed -eq 0 ]
+          then
+            echo 'Only check added or modified markdown files'
+            git diff --no-commit-id --name-only --diff-filter AM origin/$GITHUB_REF | grep  -i .md$ | grep -v -i _sidebar.md | xargs -0 -E -n1 realpath | xargs -E -n1 markdown-link-check -q -c .github/markdown-link-check-config.json
+          else
+            echo 'Check all markdown files'
+            find . -name \*.md ! -iname _sidebar.md ! -ipath \*/ISSUE_TEMPLATE/\*.md -print0 | xargs -0 -n1 markdown-link-check -q -c .github/markdown-link-check-config.json
+          fi
