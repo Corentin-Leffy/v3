@@ -33,7 +33,7 @@ languages
 
 ## Step 1: add track-specific files
 
-These are files specific to the PureScript track:
+These are files specific to the Haskell track:
 - `src/<NAME>.hs`: the stub implementation file, which is the starting point for students to work on the exercise.
 - `test/Main.hs`: the test suite.
 - `stack.yaml`: the stack project file.
